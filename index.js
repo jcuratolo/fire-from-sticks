@@ -75,12 +75,12 @@ function model(config) {
         if (handler) {
             try {
                 var stateCopy = Object.assign({}, state);
-                var prevState = Object.assign({}, state);                
+                var prevState = Object.assign({}, state);
                 var nextState = handler.call(null, stateCopy, data);
 
                 if (typeof nextState !== 'object')
                     throw new Error(`Handler ${type} did not return a new state object.`);
-                
+
                 state = nextState;
                 handleStateChange(prevState, state, send);
             } catch (e) {
@@ -99,7 +99,7 @@ var send = model({
         console.log(state);
         renderApp(state);
         if (previousState.selectedUser && previousState.selectedUser.id !== state.selectedUser.id)
-            send('fetchUserData', {user: state.selectedUser.login});
+            send('fetchUserData', { user: state.selectedUser.login });
     },
     handleError: (error, state) => {
         console.error(error)
@@ -122,7 +122,7 @@ var send = model({
             return Object.assign({}, state, { userDetails: data.userDetails })
         },
         selectUser: (state, data) => {
-            return Object.assign(state, { 
+            return Object.assign(state, {
                 selectedUser: state.users.filter(user => user.id === data.userId)[0]
             });
         }
@@ -143,44 +143,87 @@ var send = model({
         }
     }
 })
+
+function row(props, children) {
+    return [div, { className: 'row' }, children];
+}
+
+function td(children) {
+    return [
+        'td',
+        {},
+        children || ''
+    ]
+}
+
+function th(children) {
+    return [
+        'th',
+        {},
+        children || ''
+    ]
+}
+
+function button (props) {
+    props = props || {};
+    return ['button', 
+        {className: `btn btn-${props.color ? props.color : 'default'} btn-${props.size ? props.size : 'md'}`, 
+        onclick: props.handleClick}, 
+        props.text || ''];
+}
+
 function renderApp(state) {
-    var app = 
-    [div, {className: 'container'},
-        [div, {className: 'row'},
-            [div, {className: 'col-sm-4'},
-                [div, {className: 'card'},
-                    [div, {className: 'card-block'},
-                        ['button', {className: 'btn btn-default', onclick: function (e) {
-                            send('fetchUsers');
-                        }}, 'Load Users'],
-                    ],
-                    [div, {className: 'card-block'},
-                        ['table', {className: 'table table-sm', hidden: !Boolean(state.users.length)},
-                            ['thead', {}, 
-                                ['tr', {}, 
-                                    ['th', {}, 'ID'],
-                                    ['th', {}, 'Login'],
-                                    ['th', {}, 'Type']]],
-                            ['tbody', {},
-                                state.users.map(user =>['tr', {}, 
-                                    ['td', {}, user.id],    
-                                    ['td', {}, user.login], 
-                                    ['td', {}, user.type],
-                                    ['td', {}, ['button', {className: 'btn btn-info btn-sm', onclick: function () {
-                                        send('selectUser', {userId: user.id})
-                                    }}, 'Details']]])]]]
-                ]
-            ],
-            [div, {className: 'col-sm-6', hidden: Boolean(!state.selectedUser)}, [
-                [div, {className: 'card'}, 
-                    ['img', {className: 'card-img-top', src: state.selectedUser ? state.selectedUser.avatar_url : ''}],
-                    [div, {className: 'card-block'}, [
-                        [h4, {className: 'card-title'}, state.userDetails ? state.userDetails.name : ''],
-                        [p, {className: 'card-text'}, state.userDetails ? state.userDetails.email : '']
-                    ]]
-                ]
-            ]]
-        ]];
+    var app =
+        [div, { className: 'container' },
+            [div, { className: 'row' },
+                [div, { className: 'col-sm-4' },
+                    [div, { className: 'card' },
+                        [div, { className: 'card-block' },
+                            button({
+                                handleClick: function (e) {
+                                    send('fetchUsers');
+                                },
+                                text: 'Load Users'
+                            })
+                        ],
+                        [div, { className: 'card-block' },
+                            ['table', { className: 'table table-sm', hidden: !Boolean(state.users.length) },
+                                ['thead', {},
+                                    ['tr', {},
+                                        th('ID'),
+                                        th('Login'),
+                                        th('Type')
+                                    ]
+                                ],
+                                ['tbody', {},
+                                    state.users.map(user => ['tr', {},
+                                        td(user.id),
+                                        td(user.login),
+                                        td(user.type),
+                                        td(button({
+                                            color: 'info',
+                                            size: 'sm', 
+                                            text: 'Details',                                            
+                                            handleClick: function () {
+                                                send('selectUser', { userId: user.id })
+                                            }
+                                        }))
+                                    ])
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                [div, { className: 'col-sm-6', hidden: Boolean(!state.selectedUser) }, [
+                    [div, { className: 'card' },
+                        ['img', { className: 'card-img-top', src: state.selectedUser ? state.selectedUser.avatar_url : '' }],
+                        [div, { className: 'card-block' }, [
+                            [h4, { className: 'card-title' }, state.userDetails ? state.userDetails.name : ''],
+                            [p, { className: 'card-text' }, state.userDetails ? state.userDetails.email : '']
+                        ]]
+                    ]
+                ]]
+            ]];
 
     var renderedApp = createElement(app);
     document.getElementById('app').innerHTML = '';
